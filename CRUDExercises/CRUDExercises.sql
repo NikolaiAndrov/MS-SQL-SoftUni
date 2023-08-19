@@ -134,7 +134,7 @@ GO
 -- PROBLEM 21
 SELECT DepartmentID
 	FROM Departments
-	WHERE [Name] IN ('Engineering', 'Tool Design', 'Marketing', 'Information Services')
+	WHERE [Name] IN ('Engineering',Â 'Tool Design',Â 'Marketing', 'Information Services')
 GO
 
 UPDATE Employees
@@ -184,3 +184,4 @@ GO
 SELECT Name
 	FROM Characters
 	ORDER BY [Name]
+GO
