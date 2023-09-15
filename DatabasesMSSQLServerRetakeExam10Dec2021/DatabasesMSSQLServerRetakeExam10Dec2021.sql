@@ -190,6 +190,7 @@ SELECT COUNT(fd.Id)
 RETURN @flightsCount
 END
 
+-- P12
 CREATE PROCEDURE usp_SearchByAirportName @airportName VARCHAR(70)
 AS
 BEGIN
