@@ -86,7 +86,7 @@ DELETE
 	FROM CreatorsBoardgames
 	WHERE BoardgameId IN (1, 16, 31, 47)
 
-SELECT *
+DELETE 
 	FROM Boardgames
 	WHERE PublisherId IN (1, 16)
 
@@ -102,6 +102,59 @@ DELETE
 	FROM Addresses
 	WHERE Town LIKE 'L%'
 
+-- P04(2.0)
+DELETE
+	FROM CreatorsBoardgames
+	WHERE BoardgameId IN (
+							SELECT Id 
+								FROM Boardgames
+								WHERE PublisherId IN (
+														SELECT Id
+															FROM Publishers
+															WHERE AddressId IN (
+																					SELECT Id
+																						FROM Addresses
+																						WHERE Town LIKE 'L%'
+																           )
+										     )
+			     )
+
+DELETE 
+	FROM Boardgames
+	WHERE PublisherId IN (
+							SELECT Id
+								FROM Publishers
+								WHERE AddressId IN (
+														SELECT Id
+															FROM Addresses
+															WHERE Town LIKE 'L%'
+										   )
+			     )
+
+DELETE 
+	FROM Publishers
+	WHERE AddressId IN (
+							SELECT Id
+								FROM Addresses
+								WHERE Town LIKE 'L%'
+			   )
+
+DELETE 
+	FROM Addresses
+	WHERE Town LIKE 'L%'
+
+
+
+
+
+
+
+
+
+
+
+
+	
 -- P05
 SELECT 
 	[Name],
