@@ -142,18 +142,6 @@ DELETE
 DELETE 
 	FROM Addresses
 	WHERE Town LIKE 'L%'
-
-
-
-
-
-
-
-
-
-
-
-
 	
 -- P05
 SELECT 
