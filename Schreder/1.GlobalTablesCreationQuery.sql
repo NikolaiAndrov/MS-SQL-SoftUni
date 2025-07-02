@@ -1,4 +1,4 @@
-﻿DROP TABLE IF EXISTS ##TaxVatNumTable
+DROP TABLE IF EXISTS ##TaxVatNumTable
 DROP TABLE IF EXISTS ##PaymentTermsTable
 DROP TABLE IF EXISTS ##CustBankAccountTable
 DROP TABLE IF EXISTS ##CustAddressTable
@@ -31,7 +31,7 @@ SELECT
 	[AX_confirm] AS NEWITEMCODE,
 	[Zboží] AS ITEMNAME
 	INTO ##ExcelInventTable
-	FROM CZS_ItemsDeduplication_25_06
+	FROM CZS_ItemsDeduplication_30_06
 	WHERE [íslo_díl] IS NOT NULL
 	GROUP BY [íslo_díl], [AX_confirm], [Zboží]
 GO
@@ -45,7 +45,7 @@ GO
 --	[Po_et_kus] AS QUANTITY,
 --	SUBSTRING(OP_duel, 3, LEN(OP_duel)) AS SALESID
 --	INTO ##ExcelInventSOTable
---	FROM CZS_ItemsDeduplication_25_06
+--	FROM CZS_ItemsDeduplication_30_06
 --	WHERE [íslo_díl] IS NOT NULL
 --	GROUP BY [íslo_díl], [AX_confirm], [Zboží], [Po_et_kus], [OP_duel]
 --GO
@@ -94,7 +94,7 @@ SELECT
     ) AS RECEIPTDATEREQUESTED
 
 INTO ##ExcelInventSOTable
-FROM CZS_ItemsDeduplication_25_06
+FROM CZS_ItemsDeduplication_30_06
 WHERE [íslo_díl] IS NOT NULL
 GROUP BY 
     [íslo_díl], 
@@ -113,7 +113,7 @@ SELECT
 	[Po_et_kus] AS QUANTITY,
 	SUBSTRING(OV_duel, 3, LEN(OV_duel)) AS PURCHID
 	INTO ##ExcelInventPOTable
-	FROM CZS_ItemsDeduplication_25_06 
+	FROM CZS_ItemsDeduplication_30_06 
 	WHERE [íslo_díl] IS NOT NULL
 	GROUP BY [íslo_díl], [AX_confirm], [Zboží], [Po_et_kus], [OV_duel]
 GO
@@ -130,8 +130,7 @@ SELECT
 	INTO ##TaxVatNumTable
     FROM AdresarFirem AS [af]
     WHERE  
-        [af].DIC != '' 
-        AND [af].AKTIVNI = 'True'
+        ([af].DIC != '' AND [af].AKTIVNI = 'True') OR ([af].ZKRATKA IN ('po120', 'd0009'))
         --AND LEFT([af].DIC, 2) COLLATE Latin1_General_CS_AS LIKE '[A-Z][A-Z]'
     GROUP BY [af].DIC
 GO
@@ -389,7 +388,7 @@ SELECT
 GO
 
 
-SELECT --DISTINCT
+SELECT DISTINCT
 	CASE 
 		WHEN DLVMODE LIKE 'ava zdarma' THEN 10
 		WHEN DLVMODE LIKE 'dodavatel' THEN 10
@@ -622,14 +621,14 @@ WITH RankedProducts AS (
 SELECT *
 INTO ##InventTableStage
 FROM RankedProducts
-WHERE RN = 1 AND [PRIMARYVENDORID] NOT IN ('po120', 'd0009')
+WHERE RN = 1 --AND [PRIMARYVENDORID] NOT IN ('po120', 'd0009')
 ORDER BY QUANTITY DESC;
 GO
 
 
 INSERT INTO ##InventTableStage
 	(ITEMID, EnumStr_ItemType, EnumStr_PRODUCTSUBTYPE, ITEMNAME, DATAAREAID, ITEMIDCOMPANY, PRIMARYVENDORID, 
- MODELGROUPID, ITEMGROUPID, DIMGROUPID, INTRACODE, SCHE_CRMPRODUCTCODE, BOMUNITID, LEGACYKEY, QUANTITY)
+ MODELGROUPID, ITEMGROUPID, DIMGROUPID, INTRACODE,[PBAInventItemGroupId], SCHE_CRMPRODUCTCODE, BOMUNITID, LEGACYKEY, QUANTITY)
 
 SELECT 
 	ITEMID,
@@ -664,6 +663,11 @@ SELECT
         ABS(CAST(CAST(HASHBYTES('MD5', ITEMID) AS BINARY(8)) AS BIGINT)) % 10000000000 
         AS NVARCHAR(10)), 
     10), 
+    RIGHT('0000000000' + 
+    CAST(
+        ABS(CAST(CAST(HASHBYTES('MD5', ITEMID) AS BINARY(8)) AS BIGINT)) % 10000000000 
+        AS NVARCHAR(10)), 
+    10),
 	'',
 	ITEMID,
 	1
@@ -821,7 +825,7 @@ WITH Ranked AS (
   FROM AdresarFirem afv
   JOIN BankovniSpojeni bs ON afv.UID = bs.LINK_UID
   LEFT JOIN Stat st ON afv.STAT_UID = st.UID
-  WHERE afv.AKTIVNI = 'True' AND afv.ZKRATKA LIKE 'D%' AND bs.BANKOVNI_UCET != ''
+  WHERE (afv.AKTIVNI = 'True' AND afv.ZKRATKA LIKE 'D%' AND bs.BANKOVNI_UCET != '') OR ([afv].ZKRATKA IN ('po120', 'd0009'))
 )
 SELECT 
   BANKCODETYPE,
@@ -873,8 +877,9 @@ LEFT JOIN Mena AS [m] ON [afv].MENA_UID = [m].UID
 LEFT JOIN BankovniSpojeni AS [bs] ON [afv].UID = [bs].LINK_UID
 LEFT JOIN Stat AS [st] ON [afv].STAT_UID = [st].UID
 WHERE 
-    [afv].AKTIVNI = 'True' 
-    AND [afv].ZKRATKA LIKE 'D%' 
+    ([afv].AKTIVNI = 'True' 
+    AND [afv].ZKRATKA LIKE 'D%')
+    OR [afv].ZKRATKA IN ('po120', 'd0009')
     --AND [afv].DIC != '' 
     --AND LEFT([afv].DIC, 2) COLLATE Latin1_General_CS_AS LIKE '[A-Z][A-Z]'
 GROUP BY [afv].ZKRATKA
