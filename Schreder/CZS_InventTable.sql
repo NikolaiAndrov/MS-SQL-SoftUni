@@ -1,4 +1,4 @@
-﻿-- Excel file name CZS_InventTable
+-- Excel file name CZS_InventTable
 
 SELECT 
     inv.[OLDITEMID],
@@ -20,7 +20,7 @@ SELECT
     inv.[ITEMID]
     FROM (                  
             SELECT *,
-            DENSE_RANK() OVER (PARTITION BY [LEGACYKEY] ORDER BY ITEMNAME) AS rn
+            ROW_NUMBER() OVER (PARTITION BY [OLDITEMID] ORDER BY ITEMNAME) AS rn
             FROM ##InventTable
           ) AS inv
     WHERE inv.rn = 1
